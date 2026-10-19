@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#250914">
+  <title>Swarnkar Garba Mahotsav 2026 | Digital Pass</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <script src="config.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <header class="hero">
+    <div class="ornament">✦ ✧ ✦</div>
+    <p class="eyebrow">A Celebration of Tradition • Music • Garba</p>
+    <h1>SWARNKAR<br><span>GARBA MAHOTSAV</span></h1>
+    <div class="year">2K26</div>
+    <p class="hero-copy">Book your digital entry pass • Keep the QR ready at the gate</p>
+    <div class="ornament">❋ ❋ ❋</div>
+  </header>
+
+  <nav class="quicknav" aria-label="Main sections">
+    <a href="#book">Book Pass</a><a href="#retrieve">Retrieve</a><a href="#staff">Admin / Scanner</a><a href="#support">Help</a>
+  </nav>
+
+  <main>
+    <section class="panel" id="book">
+      <p class="section-kicker">01 / Visitor</p><h2>Book Your Pass</h2>
+      <p class="muted">₹200 per person · One QR can admit up to 4 people. Tickets remain inactive until payment is approved by the admin.</p>
+      <form id="bookingForm">
+        <label>Full name<input id="visitorName" required maxlength="100" autocomplete="name" placeholder="Enter your full name"></label>
+        <label>Mobile number<input id="visitorMobile" required inputmode="numeric" pattern="[0-9]{10}" maxlength="10" placeholder="10-digit mobile number"></label>
+        <label>Number of members (maximum 4)
+          <select id="members"><option value="1">1 member — ₹200</option><option value="2">2 members — ₹400</option><option value="3">3 members — ₹600</option><option value="4">4 members — ₹800</option></select>
+        </label>
+        <div class="amount-line"><span>Total amount</span><strong id="totalAmount">₹200</strong></div>
+        <a id="upiLink" class="button button-gold" href="#" rel="nofollow">Pay via UPI app</a>
+        <p class="tiny">Pay ₹200 per member to <strong>8385963066</strong>. If the UPI button does not open, open any UPI app manually and pay the displayed amount. Upload proof after payment.</p>
+        <label>UPI transaction / UTR number<input id="utr" required minlength="6" maxlength="80" placeholder="Enter UTR / transaction reference"></label>
+        <label>Payment screenshot<input id="screenshot" required type="file" accept="image/*,.pdf"></label>
+        <button class="button button-primary" type="submit">Create My Digital Pass</button>
+        <p id="bookingMessage" class="message" role="status"></p>
+      </form>
+      <div id="ticketResult" class="ticket-result hidden">
+        <div class="ticket-head"><span>SWARNKAR GARBA MAHOTSAV</span><strong id="ticketStatus" class="status pending">PENDING APPROVAL</strong></div>
+        <div class="ticket-body"><div><p class="tiny">PASS HOLDER</p><h3 id="ticketName"></h3><p id="ticketInfo" class="muted"></p><p id="ticketId" class="tiny"></p></div><canvas id="ticketQr"></canvas></div>
+        <p class="warning">Keep this ticket safe. Entry is allowed only after admin approval. A screenshot or QR image alone does not activate the pass.</p>
+        <div class="button-row"><button id="downloadTicket" class="button button-gold" type="button">Download ticket</button><button id="shareTicket" class="button button-outline" type="button">Share / WhatsApp</button></div>
+      </div>
+    </section>
+
+    <section class="panel" id="retrieve">
+      <p class="section-kicker">02 / Ticket recovery</p><h2>Retrieve Your Pass</h2>
+      <p class="muted">Forgot to download? Enter the UTR and the same mobile number used during booking.</p>
+      <form id="retrieveForm">
+        <label>UTR / transaction reference<input id="retrieveUtr" required placeholder="Enter UTR number"></label>
+        <label>Mobile number<input id="retrieveMobile" required inputmode="numeric" pattern="[0-9]{10}" maxlength="10" placeholder="10-digit mobile number"></label>
+        <button class="button button-primary" type="submit">Find My Ticket</button>
+        <p id="retrieveMessage" class="message" role="status"></p>
+      </form>
+      <div id="retrievedTicket" class="ticket-result hidden"></div>
+    </section>
+
+    <section class="panel" id="staff">
+      <p class="section-kicker">03 / Staff access</p><h2>Admin & Gate Scanner</h2>
+      <p class="muted">Authorized staff only. Admin can verify payment and manage passes. Gate staff can scan approved tickets and record entry.</p>
+      <div class="staff-login">
+        <label>Panel<select id="staffRole"><option value="admin">Admin panel</option><option value="scanner">Gate scanner</option></select></label>
+        <label>Password<input id="staffPassword" type="password" autocomplete="current-password" required placeholder="Enter staff password"></label>
+        <button id="staffLogin" class="button button-primary" type="button">Secure Login</button>
+        <p id="staffMessage" class="message" role="status"></p>
+      </div>
+      <div id="adminPanel" class="hidden">
+        <div class="panel-subhead"><h3>Admin dashboard</h3><button class="button button-small button-outline" data-logout="admin">Log out</button></div>
+        <div class="admin-controls">
+          <button id="toggleBooking" class="button button-gold">Loading booking status…</button>
+          <button id="refreshRecords" class="button button-outline">Refresh records</button>
+        </div>
+        <form id="manualPassForm" class="compact-form">
+          <h3>Create complimentary / manual pass</h3>
+          <label>Pass holder name<input id="manualName" required maxlength="100" placeholder="Enter name"></label>
+          <label>Mobile (optional)<input id="manualMobile" inputmode="numeric" maxlength="10" placeholder="Mobile number"></label>
+          <label>Allowed members<select id="manualMembers"><option>1</option><option>2</option><option>3</option><option selected>4</option></select></label>
+          <button class="button button-primary" type="submit">Create Approved Pass</button>
+          <p id="manualMessage" class="message" role="status"></p>
+        </form>
+        <div class="table-wrap"><table><thead><tr><th>Holder</th><th>Mobile</th><th>Amount</th><th>UTR</th><th>Members</th><th>Entry</th><th>Status</th><th>Payment proof</th><th>Actions</th></tr></thead><tbody id="recordsBody"><tr><td colspan="9">Log in and refresh records.</td></tr></tbody></table></div>
+        <button id="deleteAll" class="button button-danger" type="button">Delete ALL records</button>
+      </div>
+      <div id="scannerPanel" class="hidden">
+        <div class="panel-subhead"><h3>Gate scanner</h3><button class="button button-small button-outline" data-logout="scanner">Log out</button></div>
+        <p class="tiny">Camera scanning needs HTTPS and camera permission. You can also paste a ticket token below.</p>
+        <div id="reader"></div>
+        <label>Ticket QR token<input id="manualToken" placeholder="Paste token or scan QR"></label>
+        <button id="validateToken" class="button button-primary" type="button">Validate ticket</button>
+        <div id="scanResult" class="scan-result hidden"></div>
+      </div>
+    </section>
+
+    <section class="panel support" id="support">
+      <p class="section-kicker">04 / Need help?</p><h2>Help & Support</h2>
+      <p><strong>Deepak Soni</strong><br>Moti Chowk, Jodhpur</p>
+      <p class="support-number">☎ 8385963066</p>
+      <a class="button button-gold" href="https://wa.me/918385963066" target="_blank" rel="noopener">Contact on WhatsApp</a>
+      <p class="tiny">For payment issues, keep your UTR number and payment confirmation ready.</p>
+    </section>
+  </main>
+  <footer><div class="ornament">✦ ✧ ✦</div><p>SWARNKAR GARBA MAHOTSAV 2K26</p><small>Celebrate tradition. Dance with devotion. Enter with your approved pass.</small></footer>
+</body>
+</html>
